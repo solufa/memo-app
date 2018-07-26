@@ -37,3 +37,5 @@ $ git checkout master
 - components/Memo.vue > methods.onInputを完成（5行くらい）
 - components/Memo.vue > methods.putForwardを完成（10～15行くらい）
 - それぞれのメモの下の方にstate.colorListから好きな色を選べる小さな正方形ボタンを全色分コンポーネントで配置する（ヒント無しの最難関、ファイル増えるし何行になるかわからん）
+
+### store(Vuex)を正しく扱えているかどうかは開発者ツールVueタブでタイムトラベルが正常に動くかどうかで確かめる
