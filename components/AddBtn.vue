@@ -1,19 +1,6 @@
 <template>
-  <div class="add" @click="sendAddEvent">+</div>
+  <div class="add" @click="$emit('add')">+</div>
 </template>
-
-<script>
-export default {
-  methods: {
-    sendAddEvent(e) {
-      this.$emit('add', {
-        originalEvent: e,
-        myData: 'oooiiiii',
-      });
-    },
-  },
-};
-</script>
 
 <style scoped>
 .add {
