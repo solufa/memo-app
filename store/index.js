@@ -48,29 +48,26 @@ export const getters = {
 // 非同期処理はactionを経由してmutationを呼ぶ
 export const mutations = {
   addMemo(state) {
-    const newMemoData = state.memoData.concat();
-    const lastMemo = newMemoData[newMemoData.length - 1] || { id: 0 };
-
-    newMemoData.push({
-      id: lastMemo.id + 1,
+    // ...state.memoDataで配列の内容をコピーしたあとに、新しい連想配列を追加
+    state.memoData = [...state.memoData, {
+      id: Math.max(...state.memoData.map(memo => memo.id), 0) + 1,
       left: 20, // 常に一番左に生成することにした
       top: 20,
-      colorIndex: 0, // 課題
+      colorIndex: Math.floor(Math.random() * state.colorList.length), // 課題
       text: '',
-      zIndex: 0, // 新たに追加した
-    });
-
-    state.memoData = newMemoData;
+      zIndex: Math.max(...state.memoData.map(memo => memo.zIndex), 0) + 1, // 新たに追加した
+    }];
   },
   updateMemo(state, memo) {
-    const newMemoData = state.memoData.concat();
-    const targetIndex = newMemoData.findIndex(m => m.id === memo.id);
-
-    newMemoData[targetIndex] = memo;
-    state.memoData = newMemoData;
+    // mapは関数の返り値で新しい配列を作るのでコピーしたことになる
+    // 二つのidが一致したら差し替え
+    state.memoData = state.memoData.map(m => m.id === memo.id ? memo : m);
   },
   removeMemo(state, id) {
     // 課題
+    // filterはtrue/falseで判別して新しい配列を返す
+    // id が一致したらfalseにして排除する
+    state.memoData = state.memoData.filter(memo => memo.id !== id);
   },
 };
 
