@@ -1,35 +1,28 @@
-// ページ1つに巨大な連想配列1つを定義する
-// コンポーネントをまたがる情報や保存しておきたい情報を集約する
-// localStorageやFirebaseなどと連携出来るように、JSON化出来るデータのみセットする
-// つまり、関数やDOMやインスタンスは極力置かない
-// number, boolean, string, null, array, objectはJSON化可能
+import firebase from 'firebase';
 
-export const state = () => {
-  const localData = localStorage.vuex;
+firebase.initializeApp(JSON.parse(process.env.FIREBASE_KEY));
 
-  // localStorageのデータがあれば適用する
-  if (localData) {
-    return JSON.parse(localData);
-  } else {
-    return {
-      colorList: [
-        '#d00',
-        '#cc0',
-        '#0cc',
-        '#0c0',
-        '#c0c',
-      ],
-      memoData: [],
-    };
-  }
-};
+const db = firebase.database();
+
+export const state = () => ({
+  colorList: [
+    '#d00',
+    '#cc0',
+    '#0cc',
+    '#0c0',
+    '#c0c',
+  ],
+  memoData: [],
+  boards: [],
+  currentBoardId: null,
+  boardsPath: '/boards',
+});
 
 // ページ初期化時に一回だけ呼ばれる
 export const plugins = [
   (store) => {
-    // $store.commit が呼ばれるのを監視してlocalStorageに保存する
-    store.subscribe(() => {
-      localStorage.vuex = JSON.stringify(store.state);
+    db.ref(store.state.boardsPath).on('value', (snapshot) => {
+      store.commit('setBoards', snapshot.val() || []);
     });
   },
 ];
@@ -40,6 +33,9 @@ export const getters = {
   getMemoById: (state) => (id) => {
     return state.memoData.find(memo => memo.id === id);
   },
+  memoPath(state) {
+    return state.currentBoardId ? `/memos/${state.currentBoardId}` : null;
+  },
 };
 
 // stateは「必ず」mutationsの関数を通して更新する
@@ -47,27 +43,14 @@ export const getters = {
 // mutationsに非同期処理を書いてはならない
 // 非同期処理はactionを経由してmutationを呼ぶ
 export const mutations = {
-  addMemo(state) {
-    // ...state.memoDataで配列の内容をコピーしたあとに、新しい連想配列を追加
-    state.memoData = [...state.memoData, {
-      id: Math.max(...state.memoData.map(memo => memo.id), 0) + 1,
-      left: 20, // 常に一番左に生成することにした
-      top: 20,
-      colorIndex: Math.floor(Math.random() * state.colorList.length), // 課題
-      text: '',
-      zIndex: Math.max(...state.memoData.map(memo => memo.zIndex), 0) + 1, // 新たに追加した
-    }];
+  setMemoData(state, memoData) {
+    state.memoData = memoData;
   },
-  updateMemo(state, memo) {
-    // mapは関数の返り値で新しい配列を作るのでコピーしたことになる
-    // 二つのidが一致したら差し替え
-    state.memoData = state.memoData.map(m => m.id === memo.id ? memo : m);
+  setBoards(state, boards) {
+    state.boards = boards;
   },
-  removeMemo(state, id) {
-    // 課題
-    // filterはtrue/falseで判別して新しい配列を返す
-    // id が一致したらfalseにして排除する
-    state.memoData = state.memoData.filter(memo => memo.id !== id);
+  setCurrentBoardId(state, id) {
+    state.currentBoardId = id;
   },
 };
 
@@ -75,5 +58,38 @@ export const mutations = {
 // 呼び出しは$store.dispatch('関数名', 必要なら引数)
 // actionsの中で$store.commit を呼んでstateを更新する
 export const actions = {
+  async getBoards({ commit, state }) {
+    const snapshot = await db.ref(state.boardsPath).once('value');
+    commit('setBoards', snapshot.val() || []);
+  },
+  async createBoard({ state }, name) {
+    const id = Math.max(...state.boards.map(board => board.id), 0) + 1;
 
+    await db.ref(state.boardsPath).set([...state.boards, { name, id }]);
+
+    return id;
+  },
+  async addMemo({ state, getters }) {
+    await db.ref(getters.memoPath).set([
+      ...state.memoData,
+      {
+        id: Math.max(...state.memoData.map(memo => memo.id), 0) + 1,
+        left: 20, // 常に一番左に生成することにした
+        top: 20,
+        colorIndex: Math.floor(Math.random() * state.colorList.length), // 課題
+        text: '',
+        zIndex: Math.max(...state.memoData.map(memo => memo.zIndex), 0) + 1, // 新たに追加した
+      },
+    ]);
+  },
+  async updateMemo({ state, getters }, memo) {
+    await db.ref(getters.memoPath).set(
+      state.memoData.map(m => m.id === memo.id ? memo : m)
+    );
+  },
+  async removeMemo({ state, getters }, id) {
+    await db.ref(getters.memoPath).set(
+      state.memoData.filter(memo => memo.id !== id)
+    );
+  },
 };

@@ -12,3 +12,5 @@ dist
 
 # IDE
 .idea
+
+firebase.key.json

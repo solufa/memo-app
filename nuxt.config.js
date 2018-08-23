@@ -1,4 +1,5 @@
 const pkg = require('./package')
+const firebaseKey = require('./firebase.key.json');
 
 module.exports = {
   mode: 'spa',
@@ -40,7 +41,8 @@ module.exports = {
   */
   modules: [
     // Doc: https://github.com/nuxt-community/axios-module#usage
-    '@nuxtjs/axios'
+    '@nuxtjs/axios',
+    'bootstrap-vue/nuxt',
   ],
   /*
   ** Axios module configuration
@@ -56,8 +58,12 @@ module.exports = {
     /*
     ** You can extend webpack config here
     */
+    vendor: ['firebase'],
     extend(config, ctx) {
       
     }
-  }
+  },
+  env: {
+    FIREBASE_KEY: JSON.stringify(firebaseKey),
+  },
 }

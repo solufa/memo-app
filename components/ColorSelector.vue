@@ -1,7 +1,8 @@
 <template>
-  <div class="container">
+  <div class="color-frame">
     <!-- 何番目のボックスがクリックされたかという情報(index)だけを親に渡せば良い -->
     <div
+      class="color-box"
       v-for="(color, index) in colorList"
       :key="color"
       :style="`
@@ -10,7 +11,9 @@
         border-color: ${index === colorIndex ? '#fff' : color};
       `"
       @click="$emit('changeColor', index)"
-    />
+    >
+      <div/>
+    </div>
   </div>
 </template>
 
@@ -22,18 +25,22 @@ export default {
 </script>
 
 <style scoped>
-.container {
+.color-frame {
   position: absolute;
-  top: 100%;
   left: 0;
-  width: 100%;
+  right: 0;
+  bottom: 0;
 }
 
-.container > div {
-  height: 40px;
+.color-box {
   display: inline-block;
   box-sizing: border-box;
   border: 4px solid;
   cursor: pointer;
+  vertical-align: bottom;
+}
+
+.color-box > div {
+  padding-top: 100%;
 }
 </style>
